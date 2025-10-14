@@ -19,13 +19,14 @@ export async function getSpecificNews(id: number) {
 }
 
 export async function createNews(newsData: CreateNewsData) {
-  await validate(newsData);
+  await isNewsValid(newsData);
   return newsRepository.createNews(newsData);
 }
 
 export async function alterNews(id: number, newsData: AlterNewsData) {
   const news = await getSpecificNews(id);
-  await validate(newsData, news.title !== newsData.title);
+  const isTitleDifferent = news.title !== newsData.title;
+  await isNewsValid(newsData, isTitleDifferent);
 
   return newsRepository.updateNews(id, newsData);
 }
@@ -35,33 +36,50 @@ export async function deleteNews(id: number) {
   return newsRepository.removeNews(id);
 }
 
-async function validate(newsData: CreateNewsData, isNew = true) {
-  // validate if news with specific text already exists
+async function isNewsValid(newsData: CreateNewsData, isNew = true) {
+  await checkTitleConflict(newsData, isNew);
+  validateTextLength(newsData);
+  validatePublicationDate(newsData);
+}
+
+async function checkTitleConflict(newsData: CreateNewsData, isNew = true) {
+  const newsWithTitle = await findTitle(newsData, isNew);
+
+  if (newsWithTitle) {
+    throw {
+      name: "Conflict",
+      message: `News with title ${newsData.title} already exist`,
+    };
+  }
+}
+
+async function findTitle(newsData: CreateNewsData, isNew = true) {
   if (isNew) {
-    const newsWithTitle = await prisma.news.findFirst({
+    const title = await prisma.news.findFirst({
       where: { title: newsData.title },
     });
-
-    if (newsWithTitle) {
-      throw {
-        name: "Conflict",
-        message: `News with title ${newsData.title} already exist`,
-      };
-    }
+    return title;
   }
+}
 
-  // checks news text length
-  if (newsData.text.length < 500) {
+function validateTextLength(newsData: CreateNewsData) {
+  const minTextLength = 500;
+
+  if (newsData.text.length < minTextLength) {
     throw {
       name: "BadRequest",
       message: "The news text must be at least 500 characters long.",
     };
   }
+}
 
-  // checks date
+function validatePublicationDate(newsData: CreateNewsData) {
   const currentDate = new Date();
   const publicationDate = new Date(newsData.publicationDate);
-  if (publicationDate.getTime() < currentDate.getTime()) {
+  const isPublicationDateValid =
+    publicationDate.getTime() > currentDate.getTime();
+
+  if (!isPublicationDateValid) {
     throw {
       name: "BadRequest",
       message: "The publication date cannot be in the past.",
