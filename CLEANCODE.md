@@ -11,7 +11,9 @@
 - função validate() tem nome pouco semântico, não descreve exatamente qual validação está realizando;
 - função validate() possui comentários;
 - função validate() possui muitas responsabilidades;
+- função validate() possui magic number, não é especificado o que o número 500 representa;
+- função validate() possui muitas linhas;
 
 # arquivo: error-handler.ts
 
-- função errorHandlingMiddleware() com muitos if/else;
+- função errorHandlingMiddleware() possui muitos if-else;
