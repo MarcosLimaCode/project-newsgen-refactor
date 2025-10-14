@@ -13,6 +13,7 @@
 - função validate() possui muitas responsabilidades;
 - função validate() possui magic number, não é especificado o que o número 500 representa;
 - função validate() possui muitas linhas;
+- função alterNews() possui pouca semântica em validação do título;
 
 # arquivo: error-handler.ts
 
