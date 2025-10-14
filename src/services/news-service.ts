@@ -64,8 +64,9 @@ async function findTitle(newsData: CreateNewsData, isNew = true) {
 
 function validateTextLength(newsData: CreateNewsData) {
   const minTextLength = 500;
+  const isTextLengthValid = newsData.text.length >= minTextLength;
 
-  if (newsData.text.length < minTextLength) {
+  if (!isTextLengthValid) {
     throw {
       name: "BadRequest",
       message: "The news text must be at least 500 characters long.",
