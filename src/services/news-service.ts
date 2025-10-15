@@ -1,9 +1,14 @@
+import { SortOrder } from "types/news-types";
 import prisma from "../database";
 import * as newsRepository from "../repositories/news-repository";
 import { AlterNewsData, CreateNewsData } from "../repositories/news-repository";
 
-export async function getNews() {
-  return newsRepository.getNews();
+export async function getNews(
+  page: number,
+  order: SortOrder,
+  titleFilter: string
+) {
+  return newsRepository.getNews(page, order, titleFilter);
 }
 
 export async function getSpecificNews(id: number) {

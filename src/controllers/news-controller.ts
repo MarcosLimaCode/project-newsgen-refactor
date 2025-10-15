@@ -4,9 +4,18 @@ import httpStatus from "http-status";
 import * as service from "./../services/news-service";
 
 import { AlterNewsData, CreateNewsData } from "../repositories/news-repository";
+import { SortOrder } from "types/news-types";
 
 export async function getNews(req: Request, res: Response) {
-  const news = await service.getNews();
+  const page = Number(req.query.page) || 1;
+  const titleFilter = (req.query.title as string) || undefined;
+  let order: SortOrder = "desc";
+
+  if (req.query.order === "asc") {
+    order = req.query.order;
+  }
+
+  const news = await service.getNews(page, order, titleFilter);
   return res.send(news);
 }
 

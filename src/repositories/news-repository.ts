@@ -1,13 +1,25 @@
+import { SortOrder } from "types/news-types";
 import prisma from "./../database";
 import { News } from "@prisma/client";
 
 export type CreateNewsData = Omit<News, "id" | "createAt">;
 export type AlterNewsData = CreateNewsData;
 
-export function getNews() {
+export function getNews(page: number, order: SortOrder, titleFilter: string) {
+  const limit = 10;
+  const skip = (page - 1) * limit;
+  console.log("esse é o titulo que esta vindo " + titleFilter);
   return prisma.news.findMany({
+    skip: skip,
+    take: limit,
     orderBy: {
-      publicationDate: "desc",
+      publicationDate: order || "desc",
+    },
+    where: {
+      title: {
+        contains: titleFilter,
+        mode: "insensitive",
+      },
     },
   });
 }
