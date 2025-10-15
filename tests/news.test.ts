@@ -1,11 +1,14 @@
-
 import supertest from "supertest";
 import app from "../src/app";
 import prisma from "../src/database";
-import { faker } from '@faker-js/faker';
+import { faker } from "@faker-js/faker";
 import httpStatus from "http-status";
 
-import { generateRandomNews, persistNewRandomNews } from "./factories/news-factory";
+import {
+  generateRandomNews,
+  persistNewRandomNews,
+} from "./factories/news-factory";
+import { title } from "process";
 
 const api = supertest(app);
 
@@ -22,16 +25,18 @@ describe("GET /news", () => {
     const result = await api.get("/news");
     const news = result.body;
     expect(news).toHaveLength(3);
-    expect(news).toEqual(expect.arrayContaining([
-      expect.objectContaining({
-        id: expect.any(Number),
-        author: expect.any(String),
-        firstHand: expect.any(Boolean),
-        publicationDate: expect.any(String),
-        title: expect.any(String),
-        text: expect.any(String)
-      })
-    ]))
+    expect(news).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: expect.any(Number),
+          author: expect.any(String),
+          firstHand: expect.any(Boolean),
+          publicationDate: expect.any(String),
+          title: expect.any(String),
+          text: expect.any(String),
+        }),
+      ])
+    );
   });
 
   it("should get a specific id by id", async () => {
@@ -39,7 +44,7 @@ describe("GET /news", () => {
     const { status, body } = await api.get(`/news/${news.id}`);
     expect(status).toBe(httpStatus.OK);
     expect(body).toMatchObject({
-      id: news.id
+      id: news.id,
     });
   });
 
@@ -53,6 +58,58 @@ describe("GET /news", () => {
     expect(status).toBe(httpStatus.BAD_REQUEST);
   });
 
+  it("should return 10 news in page 1", async () => {
+    await persistNewRandomNews();
+    await persistNewRandomNews();
+    await persistNewRandomNews();
+    await persistNewRandomNews();
+    await persistNewRandomNews();
+    await persistNewRandomNews();
+    await persistNewRandomNews();
+    await persistNewRandomNews();
+    await persistNewRandomNews();
+    await persistNewRandomNews();
+    await persistNewRandomNews();
+    await persistNewRandomNews();
+    await persistNewRandomNews();
+    await persistNewRandomNews();
+
+    const firstPage = await api.get("/news?page=1");
+    const newsFromFirstPage = firstPage.body;
+
+    expect(newsFromFirstPage).toHaveLength(10);
+  });
+
+  it("should return 4 news in page 2", async () => {
+    await persistNewRandomNews();
+    await persistNewRandomNews();
+    await persistNewRandomNews();
+    await persistNewRandomNews();
+    await persistNewRandomNews();
+    await persistNewRandomNews();
+    await persistNewRandomNews();
+    await persistNewRandomNews();
+    await persistNewRandomNews();
+    await persistNewRandomNews();
+    await persistNewRandomNews();
+    await persistNewRandomNews();
+    await persistNewRandomNews();
+    await persistNewRandomNews();
+
+    const secondPage = await api.get("/news?page=2");
+    const newsFromSecondPage = secondPage.body;
+
+    expect(newsFromSecondPage).toHaveLength(4);
+  });
+
+  it("should find a news by title query", async () => {
+    const newsCreated = await persistNewRandomNews();
+    const news = await api.get(`/news?title=${newsCreated.title}`);
+    const result = news.body;
+    const firstResult = result[0].title;
+
+    expect(firstResult).toBe(newsCreated.title);
+  });
 });
 
 describe("POST /news", () => {
@@ -63,13 +120,13 @@ describe("POST /news", () => {
     expect(status).toBe(httpStatus.CREATED);
     expect(body).toMatchObject({
       id: expect.any(Number),
-      text: newsBody.text
+      text: newsBody.text,
     });
 
     const news = await prisma.news.findUnique({
       where: {
-        id: body.id
-      }
+        id: body.id,
+      },
     });
 
     expect(news).not.toBeNull();
@@ -102,7 +159,6 @@ describe("POST /news", () => {
     const { status } = await api.post("/news").send(newsBody);
     expect(status).toBe(httpStatus.BAD_REQUEST);
   });
-
 });
 
 describe("DELETE /news", () => {
@@ -114,8 +170,8 @@ describe("DELETE /news", () => {
 
     const news = await prisma.news.findUnique({
       where: {
-        id: newsId
-      }
+        id: newsId,
+      },
     });
 
     expect(news).toBeNull();
@@ -130,7 +186,6 @@ describe("DELETE /news", () => {
     const { status } = await api.delete(`/news/0`);
     expect(status).toBe(httpStatus.BAD_REQUEST);
   });
-
 });
 
 describe("PUT /news", () => {
@@ -143,13 +198,13 @@ describe("PUT /news", () => {
 
     const news = await prisma.news.findUnique({
       where: {
-        id: newsId
-      }
+        id: newsId,
+      },
     });
 
     expect(news).toMatchObject({
       text: newsData.text,
-      title: newsData.title
+      title: newsData.title,
     });
   });
 
@@ -191,6 +246,4 @@ describe("PUT /news", () => {
     const { status } = await api.put(`/news/${news.id}`).send(newsBody);
     expect(status).toBe(httpStatus.BAD_REQUEST);
   });
-
-
 });

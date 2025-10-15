@@ -8,7 +8,6 @@ export type AlterNewsData = CreateNewsData;
 export function getNews(page: number, order: SortOrder, titleFilter: string) {
   const limit = 10;
   const skip = (page - 1) * limit;
-  console.log("esse é o titulo que esta vindo " + titleFilter);
   return prisma.news.findMany({
     skip: skip,
     take: limit,
